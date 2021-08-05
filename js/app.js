@@ -1,50 +1,58 @@
 
 /**
- * Define Global Variables
+ * Define Global letiables
  * 
 */
 
+//page elements
 const navBar = document.querySelector('.page__header');
 const navbarList = document.getElementById('navbar__list');
 const landingContainers = document.getElementsByClassName('landing__container')
-let sections = [];
-let toTopButton = document.getElementsByTagName('button')[0];
+const toTopButton = document.getElementsByTagName('button')[0];
+const sections = document.getElementsByTagName('section');
 
+//active class str referened in css
+const activeStateClassStr = 'active-class'
+
+//helper variables for use in page view
+let scrollOffset = 0;
 let scrollEvents = 0;
-const scrollOffset = -70;
 let navBarTimeout;
 
+
 /**
- * End Global Variables
+ * End Global letiables
  * Start Helper Functions
  * 
 */
 
-const makeSectionActive = (isections,iid) => {
-    isections[iid].classList.add('your-active-class')
-}
+//helper to remove or add active class str
+const setElementState = (isections,iid,iaction) => isections[iid].classList[iaction](activeStateClassStr)
 
-const makeSectionInactive = (isections,iid) => {
-    isections[iid].classList.remove('your-active-class')
-}
-
+//iterates through sections and sets active or makes inactive
 const handleElementActveState = (isections,iactiveIdx) => {
-    for (let i = 0; i < isections.length; i++) {
-        if (i === iactiveIdx) makeSectionActive(isections,i)
-        else makeSectionInactive(isections,i)
-    }
+    for (let i = 0; i < isections.length; i++) setElementState(isections,i,i === iactiveIdx ? 'add' : 'remove')
 }
 
-const handleElementVisibility = (ielement,idisplay) => {
-    ielement.style.display = idisplay
+//handles an elements visibility
+const handleElementVisibility = (ielement,idisplay) => ielement.style.display = idisplay
+
+//handler to display or hide to top button
+const handleButtonVisibility = (ielement,ivisible) => {
+    ielement.style.opacity = ivisible ? 1 : 0;
+    ielement.style.pointerEvents = ivisible ? 'all' : 'none';
 }
 
+//helper to hide nav bar
 const setupNavBarHide = itime => {
     clearTimeout(navBarTimeout)
     navBarTimeout = setTimeout(() => {
         handleElementVisibility(navBar,'none')
     },itime)
 }
+
+//wrapper to scroll to position
+const scrollToPosition = iscrollInstructions => window.scrollTo(iscrollInstructions);
 
 
 /**
@@ -54,12 +62,10 @@ const setupNavBarHide = itime => {
 */
 
 // build the nav
-sections = document.getElementsByTagName('section');
-//TODO: make more performent
 for (let i = 0; i < sections.length; i++) {
-    var listItem = document.createElement('li')
-    var sectionStr = sections[i].getAttribute('data-nav');    
-    ((iidx) => {
+    const listItem = document.createElement('li')
+    const sectionStr = sections[i].getAttribute('data-nav');    
+    (iidx => {
         listItem.addEventListener('click',(e) => {
             handleClickEventNavBarScroll(e,iidx)
         })
@@ -71,6 +77,10 @@ for (let i = 0; i < sections.length; i++) {
     navbarList.appendChild(listItem);
 }
 
+//after navbar items added, determine height of navbar to offset when navigating to a section
+scrollOffset = -document.getElementsByClassName('navbar__menu')[0].offsetHeight;
+
+//for each landing container, add click event listner to collapse sections
 for (let i = 0; i < landingContainers.length; i++) {
 
     landingContainers[i].addEventListener('click',function(e){
@@ -106,31 +116,27 @@ const handleClickEventNavBarScroll = (e,iidx) => {
     handleElementActveState(iidx)
 }
 
-const scrollToPosition = (iscrollInstructions) => {
-    window.scrollTo(iscrollInstructions);
-}
-
-// Add class 'active' to section when near top of viewport
-
-// toTopButton = document.createElement('button');
-// toTopButton.innerHTML = 'To Top';
-// toTopButton.style.display = 'none'
+//top button event listener to go to top section
 toTopButton.addEventListener('click',(e) => {
     e.preventDefault()
+
+    //scroll to top section
     scrollToPosition({
         top: sections[0].offsetTop + scrollOffset,
         left: 0,
         behavior: 'smooth'
     })
 })
-// document.querySelector('main').appendChild(toTopButton)
 
 window.addEventListener('scroll',e => {
 
-    handleElementVisibility(toTopButton,window.scrollY > sections[sections.length-1].offsetTop + scrollOffset ? 'inline-block' : 'none')
+    //turn on to top button if user has scrolled to bottom of page
+    handleButtonVisibility(toTopButton,window.innerHeight + window.scrollY >= document.body.offsetHeight)
 
+    //if first scroll from refresh, return.. prevents navbar from displaying and leaving on refresh
     if (!scrollEvents++) return
 
+    //determine visible section
     let smallestDifference = 100000, idx = 0;
     for (let i = 0; i < sections.length; i++) {
         const diff = Math.abs(window.scrollY - sections[i].offsetTop);
@@ -140,21 +146,18 @@ window.addEventListener('scroll',e => {
         }
     }
 
+    //set determined section active
     handleElementActveState(sections,idx);
+
+    //turn on nav bar
     handleElementVisibility(navBar,'block');
+
+    //setup up timeout to hide navbar
     setupNavBarHide(3000);
 })
 
 /**
  * End Main Functions
- * Begin Events
+ *
  * 
 */
-
-// Build menu 
-
-// Scroll to section on link click
-
-// Set sections as active
-
-
